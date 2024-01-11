@@ -58,6 +58,9 @@ services:
 
       # Hapi does not EXPOSE the ports it listens on, requiring explicit traefik configuration
       - traefik.http.services.fhir-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080
+    ports:
+      # allow override of published port
+      - ${FHIR_EXTERNAL_PORT:-8088}:8080
   db:
     image: postgres:${POSTGRES_IMAGE_TAG:-16}
     environment:
