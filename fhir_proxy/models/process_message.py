@@ -184,21 +184,9 @@ def check_validation_result(validation_response):
     return issue_counts["error"] == 0
 
 def validate_reporting_bundle(reporting_bundle, fhir_url):
-    fhir_resources = []
-    fhir_resources.append(reporting_bundle)
-    message_header = get_first_resource(resource_type="MessageHeader", bundle=reporting_bundle)
-    fhir_resources.append(message_header)
-    content_bundle = get_first_resource(resource_type="Bundle", bundle=reporting_bundle)
-    fhir_resources.append(content_bundle)
-    patient = get_first_resource(resource_type="Patient", bundle=content_bundle)
-    fhir_resources.append(patient)
-    composition = get_first_resource(resource_type="Composition", bundle=content_bundle)
-    fhir_resources.append(composition)
-
-    for fhir_resource in fhir_resources:
-        validation_result = validate_fhir_resource(fhir_resource=fhir_resource, fhir_url=fhir_url)
-        if not check_validation_result(validation_result):
-            return validation_result
+    validation_result = validate_fhir_resource(fhir_resource=reporting_bundle, fhir_url=fhir_url)
+    if not check_validation_result(validation_result):
+        return validation_result
     return None
 
 def process_message_operation(reporting_bundle, fhir_url):
