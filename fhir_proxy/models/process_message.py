@@ -1,6 +1,6 @@
 import datetime
 from flask import current_app, has_app_context
-import requests
+import requests, json
 import uuid
 
 # http://build.fhir.org/ig/HL7/fhir-medmorph/Communication-communication-example-cancer-pha-response.html
@@ -95,18 +95,14 @@ def get_first_resource(resource_type, bundle):
 
 
 def remote_request(method, url, **kwargs):
-    verbs = {
-        "delete": requests.delete,
-        "get": requests.get,
-        "options": requests.options,
-        "post": requests.post,
-        "put": requests.put,
-    }
-    verb = verbs[method.lower()]
     if has_app_context():
         current_app.logger.debug("Fire request: %s %s %s", method, url, str(kwargs))
-    return verb(url, **kwargs)
+    response = requests.request(method=method, url=url, **kwargs)
 
+    try:
+        return response.json()
+    except json.decoder.JSONDecodeError:
+        return response.text
 
 def upsert_fhir_resource(fhir_resource, fhir_url):
     """
@@ -127,8 +123,7 @@ def upsert_fhir_resource(fhir_resource, fhir_url):
         method=request_method,
         url=f"{fhir_url}/{resource_type}/{logical_id}",
         json=fhir_resource)
-    response.raise_for_status()
-    return response.json()
+    return response
 
 
 def tag_with_identifier(fhir_resource, value):

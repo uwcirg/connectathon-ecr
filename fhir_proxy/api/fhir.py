@@ -32,9 +32,7 @@ def route_fhir(relative_path):
         json=request.json,
         data=request.data,
     )
-    response = jsonify(backing_response.json())
-    response.status_code = backing_response.status_code
-    return response
+    return backing_response
 
 
 @blueprint.after_request
