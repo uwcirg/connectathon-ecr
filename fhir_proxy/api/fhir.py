@@ -23,15 +23,14 @@ def process_message():
 def route_fhir(relative_path):
     backing_fhir_base_url = current_app.config['BACKING_FHIR_URL']
     backing_fhir_url = '/'.join((backing_fhir_base_url, relative_path))
-    backing_headers = {}
-    if 'Authorization' in request.headers:
-        backing_headers = {'Authorization': request.headers['Authorization']}
 
     backing_response = remote_request(
         method=request.method,
         url=backing_fhir_url,
-        headers=backing_headers,
+        headers=request.headers,
         params=request.args,
+        json=request.json,
+        data=request.data,
     )
     response = jsonify(backing_response.json())
     response.status_code = backing_response.status_code
