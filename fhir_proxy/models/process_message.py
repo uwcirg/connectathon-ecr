@@ -100,9 +100,9 @@ def remote_request(method, url, **kwargs):
     response = requests.request(method=method, url=url, **kwargs)
 
     try:
-        return response.json()
+        return response.json(), response.status_code
     except json.decoder.JSONDecodeError:
-        return response.text
+        return response.text, response.status_code
 
 def upsert_fhir_resource(fhir_resource, fhir_url):
     """
@@ -119,7 +119,7 @@ def upsert_fhir_resource(fhir_resource, fhir_url):
         current_app.logger.debug("Upsert %s(id=%s)", resource_type, logical_id)
 
     request_method = 'put' if logical_id else 'post'
-    response = remote_request(
+    response, code = remote_request(
         method=request_method,
         url=f"{fhir_url}/{resource_type}/{logical_id}",
         json=fhir_resource)

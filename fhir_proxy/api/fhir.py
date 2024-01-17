@@ -24,7 +24,7 @@ def route_fhir(relative_path):
     backing_fhir_base_url = current_app.config['BACKING_FHIR_URL']
     backing_fhir_url = '/'.join((backing_fhir_base_url, relative_path))
 
-    backing_response = remote_request(
+    backing_response, response_code = remote_request(
         method=request.method,
         url=backing_fhir_url,
         headers=request.headers,
@@ -32,7 +32,7 @@ def route_fhir(relative_path):
         json=request.json,
         data=request.data,
     )
-    return backing_response
+    return backing_response, response_code
 
 
 @blueprint.after_request
