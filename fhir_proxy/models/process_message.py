@@ -83,6 +83,15 @@ message_header_stub = {
     }
 }
 
+validation_stub = {
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "resource",
+      "resource": {}
+    }
+  ]
+}
 
 def get_first_resource(resource_type, bundle):
     """Iterate through the given bundle, returning the first matching resource of given type"""
@@ -136,8 +145,49 @@ def tag_with_identifier(fhir_resource, value):
     })
     return fhir_resource
 
+def validate_fhir_resource(fhir_resource, fhir_url):
+    resource_type=fhir_resource["resourceType"]
+    validation_body=validation_stub.copy()
+    validation_body.update({
+        "parameter": [
+            {
+            "name": "resource",
+            "resource": {fhir_resource}
+            }
+        ]})
+    request_method = 'post'
+    response = remote_request(
+        method=request_method,
+        url=f"{fhir_url}/{resource_type}/$validate",
+        json=validation_body)
+    response.raise_for_status()
+    return response.json()
+
+def check_validation_result(validation_response):
+    if len(validation_response["issue"]) == 1 \
+        and validation_response["issue"][0]["severity"] == "information" \
+        and validation_response["issue"][0]["details"]["text"] == "All OK":
+        return True
+    
+    issue_counts = {
+        "information": 0,
+        "warning": 0,
+        "error": 0
+    }
+    for issue in validation_response["issue"]:
+        issue_counts[issue["severity"]] += 1
+    return issue_counts["error"] == 0
+
+def validate_reporting_bundle(reporting_bundle, fhir_url):
+    validation_result = validate_fhir_resource(fhir_resource=reporting_bundle, fhir_url=fhir_url)
+    if not check_validation_result(validation_result):
+        return validation_result
+    return None
 
 def process_message_operation(reporting_bundle, fhir_url):
+    validation_result = validate_reporting_bundle(reporting_bundle=reporting_bundle, fhir_url=fhir_url)
+    if validation_result is not None:
+        return validation_result
     # add a logical id, if not already set
     reporting_bundle.setdefault("id", str(uuid.uuid4()))
     bundle_id = reporting_bundle["id"]
